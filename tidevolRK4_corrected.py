@@ -8,8 +8,9 @@ from scipy import arctan,special
 import numpy as np
 from numpy.linalg import norm
 from Units import units
-import matplotlib.pyplot as plt
-import subprocess
+import time
+#import matplotlib.pyplot as plt
+#import subprocess
 
 
 ############################################################
@@ -143,8 +144,6 @@ def tidal_torque(Omega,a,e):
 
 
 
-
-"""
 ############################################################
 # Tidal torque times w_q
 
@@ -165,7 +164,8 @@ def tidal_torque_wq(Omega,a,e):
         sum_torque_wq += ( G_function(e,q)**2 )*FR*omega
 
     return 1.5*G*( M_sun**2 )*(R**5/a**6)*sum_torque_wq
-"""
+
+
 
 
 ############################################################
@@ -185,17 +185,25 @@ def triaxial_torque(theta,a,e,t):
     return -1.5*(C*BmAC)*(mu/a**3)*((a/r)**3)*sin(2.0*(theta-nu))    
 
 
+
+############################################################
 # Semimajor axis equation
-"""
+
 def a_evol(Omega,a,e):
     return -2*a**2/(G*M_sun*M_planet) * tidal_torque_wq(Omega,a,e) 
 
 
+
+
+############################################################
 # Eccentricity equation
 
 def e_evol(Omega,theta,a,e,t):
     return (tidal_torque(Omega,a,e)+triaxial_torque(theta,a,e,t)) * (a*(1-e**2)/(G*M_sun))**0.5 * 1.0/(a*e*M_planet) + a_evol(Omega,a,e)/(2*a*e)*(1-e**2)
-"""
+
+
+
+
 
 ############################################################
 # The angular velocity equation
@@ -204,22 +212,26 @@ def ang_velocity(Omega):
     return Omega
 
 
+
+
+
 ############################################################
 # Integration parameters and initial conditions
 
+max_dt = (100)*365.25*86400/uT # Maximum time step allowed. Inside ( ) in years
+t_ini  = 0.0
+t_end  = 50000*P
+#t_end = (1)*365.25*86400/uT
+#N     = (t_end-t_ini)/h
+N      = 5000
+time_array   = np.linspace(t_ini,t_end,N)
 
-max_dt    = (100)*365.25*86400/uT # Maximum time step allowed. Inside ( ) in years
-t_ini     = 0.0
-t_end     = 50000*P
-#t_end    = (1)*365.25*86400/uT
-#N        = (t_end-t_ini)/h
-N         = 500
-time      = np.linspace(t_ini,t_end,N)
+
 theta_ini = 0.0*(np.pi/180.0)
 Omega_ini = 2.51*n 
 
 
-initial_conditions = [theta_ini,Omega_ini]#,a,e] #Initial condition vector
+initial_conditions = [theta_ini,Omega_ini,a,e] #Initial condition vector
 
 print max_dt
 
@@ -227,48 +239,56 @@ print max_dt
 
 print
 print "Line number: ",N
-print 
+print "t_end: %f yrs"%(t_end*uT/(86400*365.25))
 
-file1=open("evolution_corrected.dat","w")
 
 def func(eta,t):
     theta = eta[0]
     Omega = eta[1]
-#    a     = 3000#eta[2]
-#    e     = 0.27#eta[3]
+    a     = eta[2]
+    e     = eta[3]
     
-    return [ang_velocity(Omega), (tidal_torque(Omega,a,e)+triaxial_torque(theta,a,e,t))/C]#, a_evol(Omega,a,e), e_evol(Omega,theta,a,e,t)]
+    return [ang_velocity(Omega),
+            (tidal_torque(Omega,a,e)+triaxial_torque(theta,a,e,t))/C,
+            a_evol(Omega,a,e),
+            e_evol(Omega,theta,a,e,t)]
 
 print "Running ..."
 
-solucion,info = odeint(func,initial_conditions,time,full_output=True,printmessg=1)#hmax=max_dt)
+start_time = time.time()
+
+
+############################################################
+# The solution ...
+
+solucion,info = odeint(func,initial_conditions,time_array,full_output=True,printmessg=1)#hmax=max_dt)
 
 
 
+print
+print "execution time = %s hrs" %((time.time()-start_time)/3600.)
+print
 
 print info['hu']
 
-
-
+exit()
+"""
 plt.figure()
 plt.plot(time,solucion[:,1]/n)
 plt.savefig("prueba.png")
+"""
 
+file1=open("evolution_corrected.dat","w")
 
-exit()
 for i in np.arange(0,len(time)):
     theta = solucion[i][0]
     Omega = solucion[i][1]
-    a     = solucion[i][2]
-    e     = solucion[i][3]
-
-    n = 2*np.pi/np.sqrt(4*np.pi**2/mu * a**3)
-    
     """
     OrbitalEnergy=0.5*(norm(v))**2-mu/norm(r)
     """
-    file1.write( "%1.5e     %1.5e    %1.5e     %1.5e    %1.5e \n " % 
-                 (time[i]*uT/(86400*365.25),theta,Omega/n,a,e) )
+    
+    file1.write( "%1.5e     %1.5e    %1.5e   \n " % 
+                 (time[i]*uT/(86400*365.25),theta,Omega/n) )
     
     """
     if (i%10==0.0):
