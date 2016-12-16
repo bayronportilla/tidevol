@@ -8,6 +8,7 @@ from scipy import arctan,special
 import numpy as np
 from numpy.linalg import norm
 from Units import units
+import time
 #import matplotlib.pyplot as plt
 #import subprocess
 
@@ -214,7 +215,7 @@ t_end  = 500*P
 #t_end = (1)*365.25*86400/uT
 #N     = (t_end-t_ini)/h
 N      = 5000
-time   = np.linspace(t_ini,t_end,N)
+time_array   = np.linspace(t_ini,t_end,N)
 theta_ini = 0.0*(np.pi/180.0)
 Omega_ini = 2.51*n 
 
@@ -231,7 +232,7 @@ print
 print "Line number: ",N
 print "t_end: %f yrs"%(t_end*uT/(86400*365.25))
 
-exit()
+
 def func(eta,t):
     theta = eta[0]
     Omega = eta[1]
@@ -244,11 +245,12 @@ def func(eta,t):
 
 print "Running ..."
 
-solucion,info = odeint(func,initial_conditions,time,full_output=True,printmessg=1)#hmax=max_dt)
-
+start_time = time.time()
+solucion,info = odeint(func,initial_conditions,time_array,full_output=True,printmessg=1)#hmax=max_dt)
+print "execution time = %s seconds" %(time.time()-start_time)
 print info['hu']
 
-
+exit()
 """
 plt.figure()
 plt.plot(time,solucion[:,1]/n)
