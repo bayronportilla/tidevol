@@ -9,6 +9,7 @@ import numpy as np
 from numpy.linalg import norm
 from Units import units
 import matplotlib.pyplot as plt
+import subprocess
 
 
 ############################################################
@@ -142,10 +143,8 @@ def tidal_torque(Omega,a,e):
 
 
 
+
 """
-
-
-
 ############################################################
 # Tidal torque times w_q
 
@@ -166,7 +165,7 @@ def tidal_torque_wq(Omega,a,e):
         sum_torque_wq += ( G_function(e,q)**2 )*FR*omega
 
     return 1.5*G*( M_sun**2 )*(R**5/a**6)*sum_torque_wq
-
+"""
 
 
 ############################################################
@@ -174,7 +173,7 @@ def tidal_torque_wq(Omega,a,e):
 
 def triaxial_torque(theta,a,e,t):
 
-    n  = sqrt(mu/a**3)
+    n  = np.sqrt(mu/a**3)
 
     def kepler(E):
         return E-e*sin(E)-n*t
@@ -187,7 +186,7 @@ def triaxial_torque(theta,a,e,t):
 
 
 # Semimajor axis equation
-
+"""
 def a_evol(Omega,a,e):
     return -2*a**2/(G*M_sun*M_planet) * tidal_torque_wq(Omega,a,e) 
 
@@ -196,8 +195,8 @@ def a_evol(Omega,a,e):
 
 def e_evol(Omega,theta,a,e,t):
     return (tidal_torque(Omega,a,e)+triaxial_torque(theta,a,e,t)) * (a*(1-e**2)/(G*M_sun))**0.5 * 1.0/(a*e*M_planet) + a_evol(Omega,a,e)/(2*a*e)*(1-e**2)
-
 """
+
 ############################################################
 # The angular velocity equation
 
@@ -211,13 +210,13 @@ def ang_velocity(Omega):
 
 max_dt = (100)*365.25*86400/uT # Maximum time step allowed. Inside ( ) in years
 t_ini  = 0.0
-t_end  = 5000000*P
+t_end  = 50000*P
 #t_end = (1)*365.25*86400/uT
 #N     = (t_end-t_ini)/h
 N      = 500
 time   = np.linspace(t_ini,t_end,N)
 theta_ini = 0.0*(np.pi/180.0)
-Omega_ini = 2.51*n #rad/yr cerca a resonancia 2:1
+Omega_ini = 2.51*n 
 
 
 
@@ -240,13 +239,19 @@ def func(eta,t):
 #    a     = 3000#eta[2]
 #    e     = 0.27#eta[3]
     
-    return [ang_velocity(Omega), tidal_torque(Omega,a,e)/C]# + triaxial_torque(theta,a,e,t) )/C]#, a_evol(Omega,a,e), e_evol(Omega,theta,a,e,t)]
+    return [ang_velocity(Omega), (tidal_torque(Omega,a,e)+triaxial_torque(theta,a,e,t))/C]#, a_evol(Omega,a,e), e_evol(Omega,theta,a,e,t)]
+
+
+
+print "Running ..."
+
+solucion,info = odeint(func,initial_conditions,time,full_output=True,printmessg=1)#hmax=max_dt)
 
 
 
 
-solucion,info = odeint(func,initial_conditions,time,full_output=True,hmax=max_dt)
 print info['hu']
+
 
 
 plt.figure()
