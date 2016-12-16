@@ -220,7 +220,7 @@ def ang_velocity(Omega):
 
 max_dt = (100)*365.25*86400/uT # Maximum time step allowed. Inside ( ) in years
 t_ini  = 0.0
-t_end  = 50000*P
+t_end  = 50*P
 #t_end = (1)*365.25*86400/uT
 #N     = (t_end-t_ini)/h
 N      = 5000
@@ -271,7 +271,7 @@ print
 
 print info['hu']
 
-exit()
+
 """
 plt.figure()
 plt.plot(time,solucion[:,1]/n)
@@ -280,15 +280,19 @@ plt.savefig("prueba.png")
 
 file1=open("evolution_corrected.dat","w")
 
-for i in np.arange(0,len(time)):
-    theta = solucion[i][0]
-    Omega = solucion[i][1]
+for i in np.arange(0,len(time_array)):
+    theta_int = solucion[i][0]
+    Omega_int = solucion[i][1]
+    a_int     = solucion[i][2]
+    e_int     = solucion[i][3]
+    n_int     = np.sqrt(mu/a_int**3)
+
     """
     OrbitalEnergy=0.5*(norm(v))**2-mu/norm(r)
     """
     
-    file1.write( "%1.5e     %1.5e    %1.5e   \n " % 
-                 (time[i]*uT/(86400*365.25),theta,Omega/n) )
+    file1.write( "%1.5e     %1.5e    %1.5e    %1.9e    %1.9e   \n " % 
+                 (time_array[i]*uT/(86400*365.25), theta_int, Omega_int/n_int, a_int, e_int) )
     
     """
     if (i%10==0.0):
