@@ -8,8 +8,8 @@ from scipy import arctan,special
 import numpy as np
 from numpy.linalg import norm
 from Units import units
-import matplotlib.pyplot as plt
-import subprocess
+#import matplotlib.pyplot as plt
+#import subprocess
 
 
 ############################################################
@@ -210,10 +210,10 @@ def ang_velocity(Omega):
 
 max_dt = (100)*365.25*86400/uT # Maximum time step allowed. Inside ( ) in years
 t_ini  = 0.0
-t_end  = 50000*P
+t_end  = 500*P
 #t_end = (1)*365.25*86400/uT
 #N     = (t_end-t_ini)/h
-N      = 500
+N      = 5000
 time   = np.linspace(t_ini,t_end,N)
 theta_ini = 0.0*(np.pi/180.0)
 Omega_ini = 2.51*n 
@@ -229,10 +229,9 @@ print max_dt
 
 print
 print "Line number: ",N
-print 
+print "t_end: %f yrs"%(t_end*uT/(86400*365.25))
 
-file1=open("evolution_corrected.dat","w")
-
+exit()
 def func(eta,t):
     theta = eta[0]
     Omega = eta[1]
@@ -247,32 +246,26 @@ print "Running ..."
 
 solucion,info = odeint(func,initial_conditions,time,full_output=True,printmessg=1)#hmax=max_dt)
 
-
-
-
 print info['hu']
 
 
-
+"""
 plt.figure()
 plt.plot(time,solucion[:,1]/n)
 plt.savefig("prueba.png")
+"""
 
+file1=open("evolution_corrected.dat","w")
 
-exit()
 for i in np.arange(0,len(time)):
     theta = solucion[i][0]
     Omega = solucion[i][1]
-    a     = solucion[i][2]
-    e     = solucion[i][3]
-
-    n = 2*np.pi/np.sqrt(4*np.pi**2/mu * a**3)
-    
     """
     OrbitalEnergy=0.5*(norm(v))**2-mu/norm(r)
     """
-    file1.write( "%1.5e     %1.5e    %1.5e     %1.5e    %1.5e \n " % 
-                 (time[i]*uT/(86400*365.25),theta,Omega/n,a,e) )
+    
+    file1.write( "%1.5e     %1.5e    %1.5e   \n " % 
+                 (time[i]*uT/(86400*365.25),theta,Omega/n) )
     
     """
     if (i%10==0.0):
