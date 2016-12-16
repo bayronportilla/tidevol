@@ -208,22 +208,20 @@ def ang_velocity(Omega):
 # Integration parameters and initial conditions
 
 
-max_dt = (100)*365.25*86400/uT # Maximum time step allowed. Inside ( ) in years
-t_ini  = 0.0
-t_end  = 50000*P
-#t_end = (1)*365.25*86400/uT
-#N     = (t_end-t_ini)/h
-N      = 500
-time   = np.linspace(t_ini,t_end,N)
+max_dt    = (100)*365.25*86400/uT # Maximum time step allowed. Inside ( ) in years
+t_ini     = 0.0
+t_end     = 50000*P
+#t_end    = (1)*365.25*86400/uT
+#N        = (t_end-t_ini)/h
+N         = 500
+time      = np.linspace(t_ini,t_end,N)
 theta_ini = 0.0*(np.pi/180.0)
 Omega_ini = 2.51*n 
-
 
 
 initial_conditions = [theta_ini,Omega_ini]#,a,e] #Initial condition vector
 
 print max_dt
-
 
 # Printing info
 
@@ -240,8 +238,6 @@ def func(eta,t):
 #    e     = 0.27#eta[3]
     
     return [ang_velocity(Omega), (tidal_torque(Omega,a,e)+triaxial_torque(theta,a,e,t))/C]#, a_evol(Omega,a,e), e_evol(Omega,theta,a,e,t)]
-
-
 
 print "Running ..."
 
