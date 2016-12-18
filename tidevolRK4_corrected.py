@@ -35,27 +35,7 @@ uT = Unidades_Canonicas[2]
 
 
 ############################################################
-# Converting the bulk properties from the params file in SI.
-"""
-name       = params.name
-M_s        = (0.31)*Msol          # Stellar mass. Inside( ) in solar masses. 
-M_p        = (7.1)*Mearth         # Mass of the planet. Inside ( ) in earth masses.
-mu         = G*(M_s+M_p)
-R          = (1.7)*Rearth         # Medium radius of the deformed body. Inside ( ) in earth radius. 
-C          = 0.4*M_p*R**2    # Inertia moment of the deformed body 
-BmAC       = 5.0e-5               # Triaxiality [dimensionless]
-rigidity   = 8.0e10               # Rigidity of the deformed body
-tau        = 50*365.25*86400      # Andrade and Maxwell times 
-alpha      = 0.2                  # Andrade's exponent [dimensionless]
-e          = 0.27                 # Excentricity [dimensionless]
-a          = (0.218)*AU           # Semi-major axis. Inside ( ) in astronomical units. 
-#P          = 67.0*86400           # Orbital period
-P          = np.sqrt(4*np.pi**2/mu * a**3)
-#n          = 2.0*np.pi/P          # Mean motion
-n          = np.sqrt(mu/a**3)
-E0         = 0.0                  # Initial value for eccentric anomaly
-"""
-
+# Loading data from params file and converting to SI.
 
 name       = params.name
 M_s        = params.M_s * M_sun
@@ -75,23 +55,40 @@ P          = np.sqrt(4*np.pi**2/mu * a**3)
 n          = np.sqrt(mu/a**3)
 E0         = params.E0 * InRad
 
+t_ini      = params.t_ini * 365.25*86400
+t_end      = params.t_end * 365.25*86400
+
+theta_ini  = params.theta_ini * InRad
+Omega_ini  = params.p * n 
+a_ini      = params.a_ini * AU
+e_ini      = params.e_ini
+
+
 
 
 ############################################################
 # Converting into canonical units
 
-G        = 1
-M_s      = M_s/uM       
-M_p      = M_p/uM
-mu       = mu * uT**2/uL**3
-R        = R/uL
-C        = C/(uM*uL**2)
-rigidity = rigidity*(uL*uT**2/uM)
-tau      = tau/uT
-a        = a/uL
-P        = P/uT
-n        = n*uT
-E0       = 0.0
+G         = 1
+M_s       = M_s/uM       
+M_p       = M_p/uM
+mu        = mu * uT**2/uL**3
+R         = R/uL
+C         = C/(uM*uL**2)
+rigidity  = rigidity*(uL*uT**2/uM)
+tau       = tau/uT
+a         = a/uL
+P         = P/uT
+n         = n*uT
+E0        = 0.0
+
+t_ini     = t_ini/uT
+t_end     = t_end/uT
+
+theta_ini = theta_ini
+Omega_ini = Omega_ini * uT
+a_ini     = a_ini/uL
+e_ini     = e_ini
 
 
 print "G        = ",G
@@ -107,7 +104,7 @@ print "a        = ",a
 print "n        = ",n
 
 
-exit()
+
 
 ############################################################
 # A_l coefficients
@@ -116,7 +113,7 @@ def A_l(R,rigidity,M_p,l):
     return 4*np.pi*R**4*rigidity*(2*l**2 + 4*l + 3)/(3*G*l*M_p**2)
 
 
-print params.new_par
+
 
 
 ############################################################
@@ -190,6 +187,15 @@ def triaxial_torque(theta,a,e,t):
 
 
 
+############################################################
+# The angular velocity equation
+
+def dthetadt(Omega):
+    return Omega
+
+
+
+
 
 ############################################################
 # Semimajor axis equation
@@ -197,7 +203,6 @@ def triaxial_torque(theta,a,e,t):
 def dadt(Omega,a,e):
     
     return -2*a**2/(G*M_s*M_p) * tidal_torque_wq(Omega,a,e) 
-
 
 
 
@@ -213,31 +218,15 @@ def dedt(Omega,theta,a,e,t):
 
 
 
-############################################################
-# The angular velocity equation
-
-def ang_velocity(Omega):
-    return Omega
-
-
-
 
 ############################################################
-# Integration parameters and initial conditions
+# Initial conditions, time array, and output line number 
 
-max_dt = (100)*365.25*86400/uT # Maximum time step allowed. Inside ( ) in years
-t_ini  = 0.0
-t_end  = 50*P
-#t_end = (1)*365.25*86400/uT
-N      = 5000
+eta_ini      = [theta_ini,Omega_ini,a_ini,e_ini] 
+N            = params.N
 time_array   = np.linspace(t_ini,t_end,N)
 
-
-theta_ini = 0.0*(np.pi/180.0)
-Omega_ini = 2.51*n 
-
-
-initial_conditions = [theta_ini,Omega_ini,a,e] #Initial condition vector
+max_dt = (100)*365.25*86400/uT # Maximum time step allowed. Inside ( ) in years
 
 print max_dt
 
@@ -254,7 +243,7 @@ def func(eta,t):
     a     = eta[2]
     e     = eta[3]
     
-    return [ang_velocity(Omega),
+    return [dthetadt(Omega),
             (tidal_torque(Omega,a,e)+triaxial_torque(theta,a,e,t))/C,
             dadt(Omega,a,e),
             dedt(Omega,theta,a,e,t)]
@@ -268,10 +257,15 @@ print "Running ..."
 # The solution ...
 
 start_time = time.time()
-solucion,info = odeint(func,initial_conditions,time_array,full_output=True,printmessg=1)#hmax=max_dt)
+solucion,info = odeint(func,eta_ini,time_array,full_output=True,printmessg=1)
 
 print info['hu']
+exit()
 
+
+
+############################################################
+# Saving info ...
 
 file1=open("evolution_corrected.dat","w")
 

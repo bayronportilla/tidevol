@@ -20,18 +20,20 @@ a        = 0.218           # Semimajor axis, in astronomical units
 E0       = 0.0             # Initial eccentric anomaly, in degress
 
 
-"""
-G        = 1
-M_sun    = M_sun/uM       
-M_planet = M_planet/uM
-mu       = mu * uT**2/uL**3
-R        = R/uL
-C        = C/(uM*uL**2)
-rigidity = rigidity*(uL*uT**2/uM)
-tau      = tau/uT
-a        = a/uL
-P        = P/uT
-n        = n*uT
-E0       = 0.0
-"""
-new_par  = 2134.5
+
+############################################################
+# Integration parameters
+
+t_ini    = 0.0            # Starting time for simulation, in years
+t_end    = 9           # Ending time of the simulation, in years
+N        = 5000           # (Default) Number of lines to write in the output file 
+
+
+
+############################################################
+# Initial conditions
+
+theta_ini = 0.0               # Initial sidereal angle, in degrees
+p         = 2.51              # Initial resonance order, p = Omega_ini/n                     
+a_ini     = a                 # Initial semimajor axis, in astronomical units
+e_ini     = e                 # Initial orbital eccentricity, dimensionless
