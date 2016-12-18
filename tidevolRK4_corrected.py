@@ -91,7 +91,7 @@ print "Semimajor axis     = %.3f        [AU]"            % (a/AU)
 print "Orbital period     = %.3f       [Days]"          % (P/86400)
 
 print
-print "Initial conditions and integrarion parameters:"
+print "Initial conditions and integration parameters:"
 print "----------------------------------------------"
 print "Initial sidereal angle    = %.3f      [Degrees]"  % (theta_ini*InDeg)
 print "Initial rotational period = %.3f     [Days]"      % (2*np.pi/(params.p * n)/86400)
@@ -99,6 +99,52 @@ print "t_ini                     = %.3f      [years]"    % (t_ini/(365.26*86400)
 print "t_end                     = %.3f      [years]"    % (t_end/(365.26*86400))
 print "Number of output data     = %d               "    % params.N
 print 
+
+
+
+
+
+############################################################
+# Writting input information in info.log file ...
+
+file_3=open("info_%s.log"%(name),"w")
+file_3.write("""
+Bulk properties: 
+---------------- 
+Object             : %s
+Stellar mass       = %.3f        [Solar masses]
+Planetary mass     = %.3f        [Earth masses]  
+Planetary radius   = %.3f        [Earth radius]  
+Triaxiality        = %.3e    [Dimensionless]   
+Unrelaxed rigidity = %.3e    [Pascals]       
+Relaxation time    = %.3f       [years]          
+Andrade exponent   = %.3f        [Dimensionless]
+
+
+Dynamical properties:
+---------------------
+Eccentricity       = %.3f        [Dimensionless]
+Semimajor axis     = %.3f        [AU]            
+Orbital period     = %.3f       [Days]          
+
+
+Initial conditions and integration parameters:
+----------------------------------------------
+Initial sidereal angle    = %.3f      [Degrees] 
+Initial rotational period = %.3f     [Days]     
+t_ini                     = %.3f      [years]   
+t_end                     = %.3f      [years]   
+Number of output data     = %d                
+"""%(name,(M_s/M_sun),(M_p/M_earth),(R/R_earth),(BmAC),(rigidity),(tau/(365.25*86400)),(alpha), (e),(a/AU),(P/86400),(theta_ini*InDeg),(2*np.pi/(params.p * n)/86400), (t_ini/(365.26*86400)),(t_end/(365.26*86400)), params.N))
+
+
+
+
+
+
+
+
+    
 
 
 
@@ -252,7 +298,7 @@ time_array   = np.linspace(t_ini,t_end,N)
 
 max_dt = (100)*365.25*86400/uT # Maximum time step allowed. Inside ( ) in years
 
-print max_dt
+
 
 
 
@@ -279,7 +325,7 @@ start_time = time.time()
 solucion,info = odeint(func,eta_ini,time_array,full_output=True,printmessg=1)
 
 print info['hu']
-print len(info['hu'])
+
 
 
 
@@ -288,8 +334,8 @@ print len(info['hu'])
 ############################################################
 # Saving info ...
 
-file1 = open("evolution_corrected.dat","w")
-file2 = open("info.log","w")
+file_1 = open("evolution_%s.dat"%(name),"w")
+file_2 = open("step_size.log","w")
 
 for i in range(0,len(time_array)):
     theta_int = solucion[i][0]
@@ -299,12 +345,12 @@ for i in range(0,len(time_array)):
     n_int     = np.sqrt(mu/a_int**3)
 
    
-    file1.write( "%1.5e     %1.5e    %1.5e    %1.9e    %1.9e   \n " % 
+    file_1.write( "%1.5e     %1.5e    %1.5e    %1.9e    %1.9e   \n " % 
                  (time_array[i]*uT/(86400*365.25), theta_int, Omega_int/n_int, a_int, e_int) )
  
 
 for i in range(0,len(info['hu'])):
-    file2.write("%d   %.17e \n" % (i,info['hu'][i]*uT/86400))
+    file_2.write("%d   %.17e \n" % (i,info['hu'][i]*uT/86400))
     
 
 print
