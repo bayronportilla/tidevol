@@ -24,6 +24,8 @@ InRad   = np.pi/180
 InDeg   = 180/np.pi 
 
 
+
+
 ############################################################
 # Canonical units
 
@@ -31,6 +33,7 @@ Unidades_Canonicas = units(uM=0.001*M_earth,uL=0.218*AU)
 uM = Unidades_Canonicas[0]
 uL = Unidades_Canonicas[1]
 uT = Unidades_Canonicas[2]
+
 
 
 
@@ -65,6 +68,40 @@ e_ini      = params.e_ini
 
 
 
+############################################################
+# Printing info ...
+
+print
+print "Bulk properties:"
+print "----------------"
+print "Object             :",name
+print "Stellar mass       = %.3f        [Solar masses]"  % (M_s/M_sun)
+print "Planetary mass     = %.3f        [Earth masses]"  % (M_p/M_earth)
+print "Planetary radius   = %.3f        [Earth radius]"  % (R/R_earth)
+print "Triaxiality        = %.3e    [Dimensionless]"     % (BmAC)
+print "Unrelaxed rigidity = %.3e    [Pascals]"           % (rigidity)
+print "Relaxation time    = %.3f       [years]"          % (tau/(365.25*86400))
+print "Andrade exponent   = %.3f        [Dimensionless]" % (alpha)
+
+print
+print "Dynamical properties:"
+print "---------------------"
+print "Eccentricity       = %.3f        [Dimensionless]" % (e)
+print "Semimajor axis     = %.3f        [AU]"            % (a/AU)
+print "Orbital period     = %.3f       [Days]"          % (P/86400)
+
+print
+print "Initial conditions and integrarion parameters:"
+print "----------------------------------------------"
+print "Initial sidereal angle    = %.3f      [Degrees]"  % (theta_ini*InDeg)
+print "Initial rotational period = %.3f     [Days]"      % (2*np.pi/(params.p * n)/86400)
+print "t_ini                     = %.3f      [years]"    % (t_ini/(365.26*86400))
+print "t_end                     = %.3f      [years]"    % (t_end/(365.26*86400))
+print "Number of output data     = %d               "    % params.N
+print 
+
+
+
 
 ############################################################
 # Converting into canonical units
@@ -91,17 +128,6 @@ a_ini     = a_ini/uL
 e_ini     = e_ini
 
 
-print "G        = ",G
-print "M_s      = ",M_s
-print "M_p      = ",M_p
-print "mu       = ",mu
-print "R        = ",R
-print "C        = ",C
-print "rigidity = ",rigidity
-print "tau      = ",tau
-print "e        = ",e
-print "a        = ",a
-print "n        = ",n
 
 
 
@@ -167,7 +193,6 @@ def tidal_torque_wq(Omega,a,e):
 
 
 
-
 ############################################################
 # Triaxial torque
 
@@ -192,7 +217,6 @@ def triaxial_torque(theta,a,e,t):
 
 def dthetadt(Omega):
     return Omega
-
 
 
 
@@ -222,19 +246,14 @@ def dedt(Omega,theta,a,e,t):
 ############################################################
 # Initial conditions, time array, and output line number 
 
-eta_ini      = [theta_ini,Omega_ini,a_ini,e_ini] 
 N            = params.N
+eta_ini      = [theta_ini,Omega_ini,a_ini,e_ini] 
 time_array   = np.linspace(t_ini,t_end,N)
 
 max_dt = (100)*365.25*86400/uT # Maximum time step allowed. Inside ( ) in years
 
 print max_dt
 
-# Printing info
-
-print
-print "Line number: ",N
-print "t_end: %f yrs"%(t_end*uT/(86400*365.25))
 
 
 def func(eta,t):
@@ -248,7 +267,7 @@ def func(eta,t):
             dadt(Omega,a,e),
             dedt(Omega,theta,a,e,t)]
 
-print "Running ..."
+print "Status: running ..."
 
 
 
@@ -260,16 +279,19 @@ start_time = time.time()
 solucion,info = odeint(func,eta_ini,time_array,full_output=True,printmessg=1)
 
 print info['hu']
-exit()
+print len(info['hu'])
+
+
 
 
 
 ############################################################
 # Saving info ...
 
-file1=open("evolution_corrected.dat","w")
+file1 = open("evolution_corrected.dat","w")
+file2 = open("info.log","w")
 
-for i in np.arange(0,len(time_array)):
+for i in range(0,len(time_array)):
     theta_int = solucion[i][0]
     Omega_int = solucion[i][1]
     a_int     = solucion[i][2]
@@ -280,6 +302,10 @@ for i in np.arange(0,len(time_array)):
     file1.write( "%1.5e     %1.5e    %1.5e    %1.9e    %1.9e   \n " % 
                  (time_array[i]*uT/(86400*365.25), theta_int, Omega_int/n_int, a_int, e_int) )
  
+
+for i in range(0,len(info['hu'])):
+    file2.write("%d   %.17e \n" % (i,info['hu'][i]*uT/86400))
+    
 
 print
 print "Execution time = %s hrs" %((time.time()-start_time)/3600.)

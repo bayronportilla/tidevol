@@ -9,8 +9,8 @@
 
 name     = 'Gliese 581 d'  # Name of the planet
 M_s      = 0.31            # Stellar mass, in solar masses 
-M_p      = 7.1             # Planetary mass, in earth masses 
-R        = 1.7             # Planetary radius, in earth radius
+M_p      = 7.10            # Planetary mass, in earth masses 
+R        = 1.70            # Planetary radius, in earth radius
 BmAC     = 5.0e-5          # Triaxiality, dimensionless
 rigidity = 8.0e10          # Unrelaxed rigidity, in Pascals
 tau      = 50              # Maxwell (Andrade) time, in years
@@ -25,7 +25,7 @@ E0       = 0.0             # Initial eccentric anomaly, in degress
 # Integration parameters
 
 t_ini    = 0.0            # Starting time for simulation, in years
-t_end    = 9           # Ending time of the simulation, in years
+t_end    = 9.00           # Ending time of the simulation, in years
 N        = 5000           # (Default) Number of lines to write in the output file 
 
 
