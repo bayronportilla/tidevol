@@ -3,14 +3,13 @@
 from scipy.integrate import odeint,ode
 from scipy.optimize import newton
 from scipy.special import binom,gamma
-from math import sqrt,cos,sin,tan,atan
 from scipy import arctan,special
 import numpy as np
 from numpy.linalg import norm
 from Units import units
+from Ecc_Polynomial import G_function
 import time
-#import matplotlib.pyplot as plt
-#import subprocess
+
 
 
 ############################################################
@@ -33,7 +32,6 @@ uT = Unidades_Canonicas[2]
 
 ############################################################
 # Bulk properties of the system. Each property is given in SI
-
 
 G          = 6.67e-11             # Gravitational constant 
 name       = 'GJ 581 d'           # Name of the planet
@@ -89,109 +87,95 @@ print "n        = ",n
 
 
 
-
-
-
-#Calcula funcion de Bessel de orden v en la variable x
-#print special.jn(v,x)
-
-
 ############################################################
-# Hansen coefficients calculator
+# A_l coefficients
 
-#Calcula binomiales con n<0 y k>=0
-def binomial(n,k):
-    return ((-1.0)**k)*special.binom(-n+k-1,k) # See for ex. https://arxiv.org/pdf/1105.3689.pdf
-
-
-def G_function(e,q):
-    beta = e/(1+sqrt(1-e**2))
-    sum  = 0.0
-    for s in range(0,100):
-        sum += special.jn(q-s,(2+q)*e)*binomial(-4,s)*(-beta)**s
-    return ((1 + beta**2)**2)*sum
-
-
-def A2(R,rigidity,M_planet):
-    return (38.0*np.pi*rigidity*R**4) / (3.0*G*M_planet**2) #Makarov's form [Makarov 2012]
+def A_l(R,rigidity,M_planet,l):
+    return 4*np.pi*R**4*rigidity*(2*l**2 + 4*l + 3)/(3*G*l*M_planet**2)
 
 
 
 
 
 ############################################################
-# Tidal torque only
+# Tidal torque 
 
 def tidal_torque(Omega,a,e):
 
     n = np.sqrt(mu/a**3)
-    sum_torque=0.0
 
-    for q in range(-1,5):
+    sum_tidal = 0.0
+    for q in range(-1,8):
         omega = (2+q)*n - 2.0*Omega
         chi   = abs( omega )
 
-        Re_compliance = 1 + ( (chi*tau)**(-alpha) )*cos(alpha*np.pi/2)*special.gamma(alpha+1.0)
-        Im_compliance = -(chi*tau)**(-1.0) - ( (chi*tau)**(-alpha) )*sin(alpha*np.pi/2)*special.gamma(alpha+1.0)
+        Re_compliance = 1 + ( (chi*tau)**(-alpha) )*np.cos(alpha*np.pi/2)*special.gamma(alpha+1.0)
+        Im_compliance = -(chi*tau)**(-1.0) - ( (chi*tau)**(-alpha) )*np.sin(alpha*np.pi/2)*special.gamma(alpha+1.0)
 
-        FR = -( 1.5*A2(R,rigidity,M_planet)*Im_compliance ) / ( (Re_compliance + A2(R,rigidity,M_planet))**2 + Im_compliance**2 )*np.sign(omega)
+        FR = -( 1.5*A_l(R,rigidity,M_planet,2)*Im_compliance ) / ( ( Re_compliance + A_l(R,rigidity,M_planet,2) )**2 + \
+                                                                   Im_compliance**2 )*np.sign(omega)
 
-        sum_torque += ( G_function(e,q)**2 )*FR
+        sum_tidal += ( G_function(e,2,0,q)**2 )*FR
     
-    return 1.5*G*( M_sun**2 )*(R**5/a**6)*sum_torque
+    return 1.5*G*( M_sun**2 )*(R**5/a**6)*sum_tidal
 
 
 
 
-#PRUEBA
 
 ############################################################
 # Tidal torque times w_q
 
 def tidal_torque_wq(Omega,a,e):
     
-    sum_torque_wq=0.0
-    n = sqrt(mu/a**3)
+    n = np.sqrt(mu/a**3)
 
-    for q in range(-1,5):
+    sum_tidal_wq=0.0
+    for q in range(-1,8):
         omega = (2+q)*n - 2.0*Omega
         chi   = abs( omega )
 
-        Re_compliance = 1 + ( (chi*tau)**(-alpha) )*cos(alpha*np.pi/2)*special.gamma(alpha+1.0)
-        Im_compliance = -(chi*tau)**(-1.0) - ( (chi*tau)**(-alpha) )*sin(alpha*np.pi/2)*special.gamma(alpha+1.0)
+        Re_compliance = 1 + ( (chi*tau)**(-alpha) )*np.cos(alpha*np.pi/2)*special.gamma(alpha+1.0)
+        Im_compliance = -(chi*tau)**(-1.0) - ( (chi*tau)**(-alpha) )*np.sin(alpha*np.pi/2)*special.gamma(alpha+1.0)
 
-        FR = -( 1.5*A2(R,rigidity,M_planet)*Im_compliance ) / ( (Re_compliance + A2(R,rigidity,M_planet))**2 + Im_compliance**2 )*np.sign(omega)
+        FR = -( 1.5*A_l(R,rigidity,M_planet,2)*Im_compliance ) / ( ( Re_compliance + A_l(R,rigidity,M_planet,2) )**2 + \
+                                                                   Im_compliance**2 )*np.sign(omega)
 
-        sum_torque_wq += ( G_function(e,q)**2 )*FR*omega
+        sum_tidal_wq += ( G_function(e,2,0,q)**2 )*FR*omega
 
-    return 1.5*G*( M_sun**2 )*(R**5/a**6)*sum_torque_wq
+    return 1.5*G*( M_sun**2 )*(R**5/a**6)*sum_tidal_wq
+
 
 
 
 
 ############################################################
-# Tidal+triaxial torque
+# Triaxial torque
 
 def triaxial_torque(theta,a,e,t):
 
     n  = np.sqrt(mu/a**3)
 
     def kepler(E):
-        return E-e*sin(E)-n*t
+        return E-e*np.sin(E)-n*t
     E = newton(kepler,n*t)
-    nu = 2.0*np.arctan( sqrt((1+e)/(1-e))*np.tan(0.5*E) )
-    
+    nu = 2.0*np.arctan( np.sqrt((1+e)/(1-e))*np.tan(0.5*E) )
     r=a*(1-e*np.cos(E))
 
-    return -1.5*(C*BmAC)*(mu/a**3)*((a/r)**3)*sin(2.0*(theta-nu))    
+    
+    return -1.5*(C*BmAC)*(mu/a**3)*((a/r)**3)*np.sin(2.0*(theta-nu))    
+
+
 
 
 
 ############################################################
 # Semimajor axis equation
 
-def a_evol(Omega,a,e):
+def dadt(Omega,a,e):
+    
     return -2*a**2/(G*M_sun*M_planet) * tidal_torque_wq(Omega,a,e) 
+
 
 
 
@@ -199,8 +183,9 @@ def a_evol(Omega,a,e):
 ############################################################
 # Eccentricity equation
 
-def e_evol(Omega,theta,a,e,t):
-    return (tidal_torque(Omega,a,e)+triaxial_torque(theta,a,e,t)) * (a*(1-e**2)/(G*M_sun))**0.5 * 1.0/(a*e*M_planet) + a_evol(Omega,a,e)/(2*a*e)*(1-e**2)
+def dedt(Omega,theta,a,e,t):
+    
+    return (tidal_torque(Omega,a,e)+triaxial_torque(theta,a,e,t)) * (a*(1-e**2)/(G*M_sun))**0.5 * 1.0/(a*e*M_planet) + dadt(Omega,a,e)/(2*a*e)*(1-e**2)
 
 
 
@@ -215,15 +200,13 @@ def ang_velocity(Omega):
 
 
 
-
 ############################################################
 # Integration parameters and initial conditions
 
 max_dt = (100)*365.25*86400/uT # Maximum time step allowed. Inside ( ) in years
 t_ini  = 0.0
-t_end  = 50000*P
+t_end  = 50*P
 #t_end = (1)*365.25*86400/uT
-#N     = (t_end-t_ini)/h
 N      = 5000
 time_array   = np.linspace(t_ini,t_end,N)
 
@@ -251,33 +234,21 @@ def func(eta,t):
     
     return [ang_velocity(Omega),
             (tidal_torque(Omega,a,e)+triaxial_torque(theta,a,e,t))/C,
-            a_evol(Omega,a,e),
-            e_evol(Omega,theta,a,e,t)]
+            dadt(Omega,a,e),
+            dedt(Omega,theta,a,e,t)]
 
 print "Running ..."
 
-start_time = time.time()
+
 
 
 ############################################################
 # The solution ...
-
+start_time = time.time()
 solucion,info = odeint(func,initial_conditions,time_array,full_output=True,printmessg=1)#hmax=max_dt)
-
-
-
-print
-print "execution time = %s hrs" %((time.time()-start_time)/3600.)
-print
 
 print info['hu']
 
-
-"""
-plt.figure()
-plt.plot(time,solucion[:,1]/n)
-plt.savefig("prueba.png")
-"""
 
 file1=open("evolution_corrected.dat","w")
 
@@ -288,10 +259,7 @@ for i in np.arange(0,len(time_array)):
     e_int     = solucion[i][3]
     n_int     = np.sqrt(mu/a_int**3)
 
-    """
-    OrbitalEnergy=0.5*(norm(v))**2-mu/norm(r)
-    """
-    
+   
     file1.write( "%1.5e     %1.5e    %1.5e    %1.9e    %1.9e   \n " % 
                  (time_array[i]*uT/(86400*365.25), theta_int, Omega_int/n_int, a_int, e_int) )
     
@@ -302,6 +270,10 @@ for i in np.arange(0,len(time_array)):
                      (time[i]*uT,r[0],r[1],v[0],v[1],solucion[i][4],solucion[i][5]/n,OrbitalEnergy) )
     """
 
+
+print
+print "Execution time = %s hrs" %((time.time()-start_time)/3600.)
+print
     
 
 
