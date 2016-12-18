@@ -220,7 +220,7 @@ def ang_velocity(Omega):
 
 max_dt = (100)*365.25*86400/uT # Maximum time step allowed. Inside ( ) in years
 t_ini  = 0.0
-t_end  = 50*P
+t_end  = 50000*P
 #t_end = (1)*365.25*86400/uT
 #N     = (t_end-t_ini)/h
 N      = 5000
