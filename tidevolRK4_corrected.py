@@ -1,29 +1,33 @@
 #!/usr/bin/env python
 
-from scipy.integrate import odeint,ode
+import numpy as np
+from scipy.integrate import odeint
 from scipy.optimize import newton
 from scipy.special import binom,gamma
 from scipy import arctan,special
-import numpy as np
 from numpy.linalg import norm
 from Units import units
 from Ecc_Polynomial import G_function
 import time
-
+import params
 
 
 ############################################################
-# Constants and definitions
+# Constants and definitions. All of it in SI
 
-Msol   = 1.988500e30 #kg
-Mearth = 5.9723e24 #kg
-Rearth = 6371000.0 #m
-AU     = 149.6e9 #m
+G       = 6.67408e-11
+M_sun   = 1.988500e30 
+M_earth = 5.9723e24 
+R_earth = 6371000.0 
+AU      = 149.6e9
+InRad   = np.pi/180
+InDeg   = 180/np.pi 
+
 
 ############################################################
 # Canonical units
 
-Unidades_Canonicas = units(uM=0.001*Mearth,uL=0.218*AU)
+Unidades_Canonicas = units(uM=0.001*M_earth,uL=0.218*AU)
 uM = Unidades_Canonicas[0]
 uL = Unidades_Canonicas[1]
 uT = Unidades_Canonicas[2]
@@ -31,15 +35,14 @@ uT = Unidades_Canonicas[2]
 
 
 ############################################################
-# Bulk properties of the system. Each property is given in SI
-
-G          = 6.67e-11             # Gravitational constant 
-name       = 'GJ 581 d'           # Name of the planet
-M_sun      = (0.31)*Msol          # Stellar mass. Inside( ) in solar masses. 
-M_planet   = (7.1)*Mearth         # Mass of the planet. Inside ( ) in earth masses.
-mu         = G*(M_sun+M_planet)
+# Converting the bulk properties from the params file in SI.
+"""
+name       = params.name
+M_s        = (0.31)*Msol          # Stellar mass. Inside( ) in solar masses. 
+M_p        = (7.1)*Mearth         # Mass of the planet. Inside ( ) in earth masses.
+mu         = G*(M_s+M_p)
 R          = (1.7)*Rearth         # Medium radius of the deformed body. Inside ( ) in earth radius. 
-C          = 0.4*M_planet*R**2    # Inertia moment of the deformed body 
+C          = 0.4*M_p*R**2    # Inertia moment of the deformed body 
 BmAC       = 5.0e-5               # Triaxiality [dimensionless]
 rigidity   = 8.0e10               # Rigidity of the deformed body
 tau        = 50*365.25*86400      # Andrade and Maxwell times 
@@ -51,7 +54,26 @@ P          = np.sqrt(4*np.pi**2/mu * a**3)
 #n          = 2.0*np.pi/P          # Mean motion
 n          = np.sqrt(mu/a**3)
 E0         = 0.0                  # Initial value for eccentric anomaly
+"""
 
+
+name       = params.name
+M_s        = params.M_s * M_sun
+M_p        = params.M_p * M_earth
+mu         = G*(M_s+M_p) 
+R          = params.R * R_earth
+C          = 0.4*M_p*R**2 
+BmAC       = params.BmAC
+rigidity   = params.rigidity
+tau        = params.tau * 365.25*86400
+alpha      = params.alpha
+e          = params.e
+a          = params.a * AU
+#P          = 67.0*86400           # Orbital period
+P          = np.sqrt(4*np.pi**2/mu * a**3)
+#n          = 2.0*np.pi/P          # Mean motion
+n          = np.sqrt(mu/a**3)
+E0         = params.E0 * InRad
 
 
 
@@ -59,8 +81,8 @@ E0         = 0.0                  # Initial value for eccentric anomaly
 # Converting into canonical units
 
 G        = 1
-M_sun    = M_sun/uM       
-M_planet = M_planet/uM
+M_s      = M_s/uM       
+M_p      = M_p/uM
 mu       = mu * uT**2/uL**3
 R        = R/uL
 C        = C/(uM*uL**2)
@@ -73,8 +95,8 @@ E0       = 0.0
 
 
 print "G        = ",G
-print "M_sun    = ",M_sun
-print "M_planet = ",M_planet
+print "M_s      = ",M_s
+print "M_p      = ",M_p
 print "mu       = ",mu
 print "R        = ",R
 print "C        = ",C
@@ -85,16 +107,16 @@ print "a        = ",a
 print "n        = ",n
 
 
-
+exit()
 
 ############################################################
 # A_l coefficients
 
-def A_l(R,rigidity,M_planet,l):
-    return 4*np.pi*R**4*rigidity*(2*l**2 + 4*l + 3)/(3*G*l*M_planet**2)
+def A_l(R,rigidity,M_p,l):
+    return 4*np.pi*R**4*rigidity*(2*l**2 + 4*l + 3)/(3*G*l*M_p**2)
 
 
-
+print params.new_par
 
 
 ############################################################
@@ -112,12 +134,12 @@ def tidal_torque(Omega,a,e):
         Re_compliance = 1 + ( (chi*tau)**(-alpha) )*np.cos(alpha*np.pi/2)*special.gamma(alpha+1.0)
         Im_compliance = -(chi*tau)**(-1.0) - ( (chi*tau)**(-alpha) )*np.sin(alpha*np.pi/2)*special.gamma(alpha+1.0)
 
-        FR = -( 1.5*A_l(R,rigidity,M_planet,2)*Im_compliance ) / ( ( Re_compliance + A_l(R,rigidity,M_planet,2) )**2 + \
+        FR = -( 1.5*A_l(R,rigidity,M_p,2)*Im_compliance ) / ( ( Re_compliance + A_l(R,rigidity,M_p,2) )**2 + \
                                                                    Im_compliance**2 )*np.sign(omega)
 
         sum_tidal += ( G_function(e,2,0,q)**2 )*FR
     
-    return 1.5*G*( M_sun**2 )*(R**5/a**6)*sum_tidal
+    return 1.5*G*( M_s**2 )*(R**5/a**6)*sum_tidal
 
 
 
@@ -138,12 +160,12 @@ def tidal_torque_wq(Omega,a,e):
         Re_compliance = 1 + ( (chi*tau)**(-alpha) )*np.cos(alpha*np.pi/2)*special.gamma(alpha+1.0)
         Im_compliance = -(chi*tau)**(-1.0) - ( (chi*tau)**(-alpha) )*np.sin(alpha*np.pi/2)*special.gamma(alpha+1.0)
 
-        FR = -( 1.5*A_l(R,rigidity,M_planet,2)*Im_compliance ) / ( ( Re_compliance + A_l(R,rigidity,M_planet,2) )**2 + \
+        FR = -( 1.5*A_l(R,rigidity,M_p,2)*Im_compliance ) / ( ( Re_compliance + A_l(R,rigidity,M_p,2) )**2 + \
                                                                    Im_compliance**2 )*np.sign(omega)
 
         sum_tidal_wq += ( G_function(e,2,0,q)**2 )*FR*omega
 
-    return 1.5*G*( M_sun**2 )*(R**5/a**6)*sum_tidal_wq
+    return 1.5*G*( M_s**2 )*(R**5/a**6)*sum_tidal_wq
 
 
 
@@ -174,7 +196,7 @@ def triaxial_torque(theta,a,e,t):
 
 def dadt(Omega,a,e):
     
-    return -2*a**2/(G*M_sun*M_planet) * tidal_torque_wq(Omega,a,e) 
+    return -2*a**2/(G*M_s*M_p) * tidal_torque_wq(Omega,a,e) 
 
 
 
@@ -185,7 +207,7 @@ def dadt(Omega,a,e):
 
 def dedt(Omega,theta,a,e,t):
     
-    return (tidal_torque(Omega,a,e)+triaxial_torque(theta,a,e,t)) * (a*(1-e**2)/(G*M_sun))**0.5 * 1.0/(a*e*M_planet) + dadt(Omega,a,e)/(2*a*e)*(1-e**2)
+    return (tidal_torque(Omega,a,e)+triaxial_torque(theta,a,e,t)) * (a*(1-e**2)/(G*M_s))**0.5 * 1.0/(a*e*M_p) + dadt(Omega,a,e)/(2*a*e)*(1-e**2)
 
 
 
@@ -244,6 +266,7 @@ print "Running ..."
 
 ############################################################
 # The solution ...
+
 start_time = time.time()
 solucion,info = odeint(func,initial_conditions,time_array,full_output=True,printmessg=1)#hmax=max_dt)
 
@@ -262,14 +285,7 @@ for i in np.arange(0,len(time_array)):
    
     file1.write( "%1.5e     %1.5e    %1.5e    %1.9e    %1.9e   \n " % 
                  (time_array[i]*uT/(86400*365.25), theta_int, Omega_int/n_int, a_int, e_int) )
-    
-    """
-    if (i%10==0.0):
-        #(time   x   y   vx   vy   theta   omega/n   OrbitalEnergy)
-        file1.write( "%1.5e     %1.5e    %1.5e     %1.5e    %1.5e   %1.5e   %1.5e   %1.5e \n " % 
-                     (time[i]*uT,r[0],r[1],v[0],v[1],solucion[i][4],solucion[i][5]/n,OrbitalEnergy) )
-    """
-
+ 
 
 print
 print "Execution time = %s hrs" %((time.time()-start_time)/3600.)
