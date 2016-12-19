@@ -7,7 +7,7 @@
 ############################################################
 # Bulk properties of the system
 
-name     = 'Gliese 581 d'  # Name of the planet
+name     = 'Gliese581d'  # Name of the planet
 M_s      = 0.31            # Stellar mass, in solar masses 
 M_p      = 7.10            # Planetary mass, in earth masses 
 R        = 1.70            # Planetary radius, in earth radius

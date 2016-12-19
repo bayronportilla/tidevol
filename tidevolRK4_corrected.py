@@ -12,6 +12,8 @@ import time
 import params
 
 
+import matplotlib.pyplot as plt
+
 ############################################################
 # Constants and definitions. All of it in SI
 
@@ -135,16 +137,12 @@ Initial rotational period = %.3f     [Days]
 t_ini                     = %.3f      [years]   
 t_end                     = %.3f      [years]   
 Number of output data     = %d                
-"""%(name,(M_s/M_sun),(M_p/M_earth),(R/R_earth),(BmAC),(rigidity),(tau/(365.25*86400)),(alpha), (e),(a/AU),(P/86400),(theta_ini*InDeg),(2*np.pi/(params.p * n)/86400), (t_ini/(365.26*86400)),(t_end/(365.26*86400)), params.N))
+"""%(name,(M_s/M_sun),(M_p/M_earth),(R/R_earth),(BmAC),(rigidity),(tau/(365.25*86400)),(alpha),
+     (e),(a/AU),(P/86400),(theta_ini*InDeg),(2*np.pi/(params.p * n)/86400), (t_ini/(365.26*86400)),
+     (t_end/(365.26*86400)), params.N))
 
 
 
-
-
-
-
-
-    
 
 
 
@@ -246,13 +244,29 @@ def triaxial_torque(theta,a,e,t):
 
     n  = np.sqrt(mu/a**3)
 
+    
     def kepler(E):
         return E-e*np.sin(E)-n*t
     E = newton(kepler,n*t)
+
+    if(E>2*np.pi):
+        E = E - np.floor(E/(2*np.pi))*2*np.pi
+
     nu = 2.0*np.arctan( np.sqrt((1+e)/(1-e))*np.tan(0.5*E) )
-    r=a*(1-e*np.cos(E))
+    
+    if(nu<0):
+        nu = 2*np.pi - abs(nu)
+
+    if( nu > 2*np.pi):
+        nu = nu - np.floor(nu/(2*np.pi))*2*np.pi
+            
+    r = a*(1-e*np.cos(E))
+
+    if(theta>2*np.pi):
+        theta = theta - np.floor(theta/(2*np.pi))*2*np.pi
 
     
+
     return -1.5*(C*BmAC)*(mu/a**3)*((a/r)**3)*np.sin(2.0*(theta-nu))    
 
 
@@ -314,6 +328,7 @@ def func(eta,t):
             dedt(Omega,theta,a,e,t)]
 
 print "Status: running ..."
+
 
 
 
