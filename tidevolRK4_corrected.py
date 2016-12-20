@@ -12,7 +12,7 @@ import time
 import params
 
 
-import matplotlib.pyplot as plt
+
 
 ############################################################
 # Constants and definitions. All of it in SI
