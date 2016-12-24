@@ -175,7 +175,6 @@ e_ini     = e_ini
 
 
 
-
 ############################################################
 # A_l coefficients
 
@@ -337,7 +336,7 @@ print "Status: running ..."
 # The solution ...
 
 start_time = time.time()
-solucion,info = odeint(func,eta_ini,time_array,full_output=True,printmessg=1)
+solucion,info = odeint(func,eta_ini,time_array,full_output=True,printmessg=1,mxstep=5000)
 
 print info['hu']
 

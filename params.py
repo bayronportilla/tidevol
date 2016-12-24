@@ -25,7 +25,7 @@ E0       = 0.0             # Initial eccentric anomaly, in degress
 # Integration parameters
 
 t_ini    = 0.0            # Starting time for simulation, in years
-t_end    = 9.00           # Ending time of the simulation, in years
+t_end    = 50000          # Ending time of the simulation, in years
 N        = 5000           # (Default) Number of lines to write in the output file 
 
 
