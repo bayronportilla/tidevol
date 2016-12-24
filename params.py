@@ -25,7 +25,7 @@ E0       = 0.0             # Initial eccentric anomaly, in degress
 # Integration parameters
 
 t_ini    = 0.0            # Starting time for simulation, in years
-t_end    = 9.00           # Ending time of the simulation, in years
+t_end    = 50000           # Ending time of the simulation, in years
 N        = 5000           # (Default) Number of lines to write in the output file 
 
 
@@ -33,7 +33,7 @@ N        = 5000           # (Default) Number of lines to write in the output fil
 ############################################################
 # Initial conditions
 
-theta_ini = 0.0               # Initial sidereal angle, in degrees
+theta_ini = 90.0               # Initial sidereal angle, in degrees
 p         = 2.51              # Initial resonance order, p = Omega_ini/n                     
 a_ini     = a                 # Initial semimajor axis, in astronomical units
 e_ini     = e                 # Initial orbital eccentricity, dimensionless
