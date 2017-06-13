@@ -13,7 +13,7 @@ M_p      = 7.10            # Planetary mass, in earth masses
 R        = 1.70            # Planetary radius, in earth radius
 BmAC     = 5.0e-5          # Triaxiality, dimensionless
 rigidity = 8.0e10          # Unrelaxed rigidity, in Pascals
-tau      = 50.0            # Maxwell (Andrade) time, in years
+tau_M    = 50.0            # Maxwell time, in years
 alpha    = 0.2             # Andrade's exponent, dimensionless  
 e        = 0.27            # Orbital eccentricity, dimensionless
 a        = 0.218           # Semimajor axis, in astronomical units
@@ -34,7 +34,7 @@ N        = 100.0         # (Default) Number of lines to write in the output file
 ############################################################
 # Initial conditions
 
-theta_ini = 100.0               # Initial sidereal angle, in degrees
+theta_ini = 100.0             # Initial sidereal angle, in degrees
 p         = 2.51              # Initial resonance order, p = Omega_ini/n                     
 a_ini     = a                 # Initial semimajor axis, in astronomical units
 e_ini     = e                 # Initial orbital eccentricity, dimensionless

@@ -50,7 +50,7 @@ R          = params.R * R_earth
 C          = 0.4*M_p*R**2 
 BmAC       = params.BmAC
 rigidity   = params.rigidity
-tau        = params.tau * 365.25*86400
+tau_M      = params.tau_M * 365.25*86400
 alpha      = params.alpha
 e          = params.e
 a          = params.a * AU
@@ -80,7 +80,7 @@ print "Planetary mass     = %.3f        [Earth masses]"  % (M_p/M_earth)
 print "Planetary radius   = %.3f        [Earth radius]"  % (R/R_earth)
 print "Triaxiality        = %.3e    [Dimensionless]"     % (BmAC)
 print "Unrelaxed rigidity = %.3e    [Pascals]"           % (rigidity)
-print "Relaxation time    = %.3f       [years]"          % (tau/(365.25*86400))
+print "Relaxation time    = %.3f       [years]"          % (tau_M/(365.25*86400))
 print "Andrade exponent   = %.3f        [Dimensionless]" % (alpha)
 
 print
@@ -115,9 +115,9 @@ Object             : %s
 Stellar mass       = %.3f        [Solar masses]
 Planetary mass     = %.3f        [Earth masses]  
 Planetary radius   = %.3f        [Earth radius]  
-Triaxiality        = %.3e    [Dimensionless]   
-Unrelaxed rigidity = %.3e    [Pascals]       
-Relaxation time    = %.3f       [years]          
+Triaxiality        = %.3e        [Dimensionless]   
+Unrelaxed rigidity = %.3e        [Pascals]       
+Relaxation time    = %.3f        [years]          
 Andrade exponent   = %.3f        [Dimensionless]
 
 
@@ -125,17 +125,17 @@ Dynamical properties:
 ---------------------
 Eccentricity       = %.3f        [Dimensionless]
 Semimajor axis     = %.3f        [AU]            
-Orbital period     = %.3f       [Days]          
+Orbital period     = %.3f        [Days]          
 
 
 Initial conditions and integration parameters:
 ----------------------------------------------
 Initial sidereal angle    = %.3f      [Degrees] 
-Initial rotational period = %.3f     [Days]     
+Initial rotational period = %.3f      [Days]     
 t_ini                     = %.3f      [years]   
 t_end                     = %.3f      [years]   
 Number of output data     = %d                
-"""%(name,(M_s/M_sun),(M_p/M_earth),(R/R_earth),(BmAC),(rigidity),(tau/(365.25*86400)),(alpha),
+"""%(name,(M_s/M_sun),(M_p/M_earth),(R/R_earth),(BmAC),(rigidity),(tau_M/(365.25*86400)),(alpha),
      (e),(a/AU),(P/86400),(theta_ini*InDeg),(2*np.pi/(params.p * n)/86400), (t_ini/(365.26*86400)),
      (t_end/(365.26*86400)), params.N))
 
@@ -154,7 +154,7 @@ mu        = mu * uT**2/uL**3
 R         = R/uL
 C         = C/(uM*uL**2)
 rigidity  = rigidity*(uL*uT**2/uM)
-tau       = tau/uT
+tau_M     = tau_M/uT
 a         = a/uL
 P         = P/uT
 n         = n*uT
@@ -191,9 +191,10 @@ def tidal_torque(Omega,a,e):
     for q in range(-1,8):
         omega = (2+q)*n - 2.0*Omega
         chi   = abs( omega )
+        tau_A = (100.0*np.exp(-chi/0.2) + 1.0)*tau_M
 
-        Re_compliance = 1 + ( (chi*tau)**(-alpha) )*np.cos(alpha*np.pi/2)*special.gamma(alpha+1.0)
-        Im_compliance = -(chi*tau)**(-1.0) - ( (chi*tau)**(-alpha) )*np.sin(alpha*np.pi/2)*special.gamma(alpha+1.0)
+        Re_compliance = 1 + ( (chi*tau_A)**(-alpha) )*np.cos(alpha*np.pi/2)*special.gamma(alpha+1.0)
+        Im_compliance = -(chi*tau_M)**(-1.0) - ( (chi*tau_A)**(-alpha) )*np.sin(alpha*np.pi/2)*special.gamma(alpha+1.0)
 
         FR = -( 1.5*A_l(R,rigidity,M_p,2)*Im_compliance ) / ( ( Re_compliance + A_l(R,rigidity,M_p,2) )**2 + \
                                                                    Im_compliance**2 )*np.sign(omega)
@@ -215,9 +216,10 @@ def tidal_torque_wq(Omega,a,e):
     for q in range(-1,8):
         omega = (2+q)*n - 2.0*Omega
         chi   = abs( omega )
+        tau_A = (100.0*np.exp(-chi/0.2) + 1.0)*tau_M
 
-        Re_compliance = 1 + ( (chi*tau)**(-alpha) )*np.cos(alpha*np.pi/2)*special.gamma(alpha+1.0)
-        Im_compliance = -(chi*tau)**(-1.0) - ( (chi*tau)**(-alpha) )*np.sin(alpha*np.pi/2)*special.gamma(alpha+1.0)
+        Re_compliance = 1 + ( (chi*tau_A)**(-alpha) )*np.cos(alpha*np.pi/2)*special.gamma(alpha+1.0)
+        Im_compliance = -(chi*tau_M)**(-1.0) - ( (chi*tau_A)**(-alpha) )*np.sin(alpha*np.pi/2)*special.gamma(alpha+1.0)
 
         FR = -( 1.5*A_l(R,rigidity,M_p,2)*Im_compliance ) / ( ( Re_compliance + A_l(R,rigidity,M_p,2) )**2 + \
                                                                    Im_compliance**2 )*np.sign(omega)
@@ -237,26 +239,13 @@ def triaxial_torque(theta,a,e,t):
     
     def kepler(E):
         return E-e*np.sin(E)-n*t
+
     E = newton(kepler,n*t)
 
-    if(E>2*np.pi):
-        E = E - np.floor(E/(2*np.pi))*2*np.pi
-
-    nu = 2.0*np.arctan( np.sqrt((1+e)/(1-e))*np.tan(0.5*E) )
+    nu = 2.0*np.arctan2(1 , 1/(np.sqrt((1+e)/(1-e))*np.tan(0.5*E)) )
     
-    if(nu<0):
-        nu = 2*np.pi - abs(nu)
-
-    if( nu > 2*np.pi):
-        nu = nu - np.floor(nu/(2*np.pi))*2*np.pi
-            
     r = a*(1-e*np.cos(E))
-
-    if(theta>2*np.pi):
-        theta = theta - np.floor(theta/(2*np.pi))*2*np.pi
-
     
-
     return -1.5*(C*BmAC)*(mu/a**3)*((a/r)**3)*np.sin(2.0*(theta-nu))    
 
 
